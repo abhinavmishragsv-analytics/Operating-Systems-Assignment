@@ -1,0 +1,47 @@
+#!/bin/bash
+
+while true
+do
+    echo "1. Area of Circle"
+    echo "2. Circumference of Circle"
+    echo "3. Area of Rectangle"
+    echo "4. Area of Square"
+    echo "5. Exit"
+    echo "Enter choice:"
+    read ch
+
+    case $ch in
+        1)
+            echo "Enter radius:"
+            read r
+            area=$(echo "3.14 * $r * $r" | bc)
+            echo "Area of Circle: $area"
+            ;;
+        2)
+            echo "Enter radius:"
+            read r
+            circum=$(echo "2 * 3.14 * $r" | bc)
+            echo "Circumference: $circum"
+            ;;
+        3)
+            echo "Enter length:"
+            read l
+            echo "Enter breadth:"
+            read b
+            area=$((l * b))
+            echo "Area of Rectangle: $area"
+            ;;
+        4)
+            echo "Enter side:"
+            read s
+            area=$((s * s))
+            echo "Area of Square: $area"
+            ;;
+        5)
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice"
+            ;;
+    esac
+done
