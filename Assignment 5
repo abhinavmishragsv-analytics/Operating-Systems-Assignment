@@ -1,0 +1,166 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MEMORY_SIZE 1024   // Total memory (KB)
+
+typedef struct block {
+    int size;
+    int free;
+    int process_id;
+    struct block* next;
+} block;
+
+block* head = NULL;
+int last_alloc = 0; // for Next Fit
+void initialize_memory() {
+    head = (block*)malloc(sizeof(block));
+    head->size = MEMORY_SIZE;
+    head->free = 1;
+    head->process_id = -1;
+    head->next = NULL;
+}
+void display_memory() {
+    block* temp = head;
+    printf("\nMemory Status:\n");
+
+    while(temp) {
+        printf("[Size: %d | %s | PID: %d] -> ",
+            temp->size,
+            temp->free ? "Free" : "Used",
+            temp->process_id);
+        temp = temp->next;
+    }
+    printf("NULL\n");
+}
+void split_block(block* fit, int size, int pid) {
+    block* new_block = (block*)malloc(sizeof(block));
+
+    new_block->size = fit->size - size;
+    new_block->free = 1;
+    new_block->process_id = -1;
+    new_block->next = fit->next;
+
+    fit->size = size;
+    fit->free = 0;
+    fit->process_id = pid;
+    fit->next = new_block;
+}
+int first_fit(int size, int pid) {
+    block* temp = head;
+
+    while(temp) {
+        if(temp->free && temp->size >= size) {
+            split_block(temp, size, pid);
+            return 1;
+        }
+        temp = temp->next;
+    }
+    return 0;
+}
+int best_fit(int size, int pid) {
+    block *temp = head, *best = NULL;
+
+    while(temp) {
+        if(temp->free && temp->size >= size) {
+            if(!best || temp->size < best->size)
+                best = temp;
+        }
+        temp = temp->next;
+    }
+
+    if(best) {
+        split_block(best, size, pid);
+        return 1;
+    }
+    return 0;
+}
+int worst_fit(int size, int pid) {
+    block *temp = head, *worst = NULL;
+
+    while(temp) {
+        if(temp->free && temp->size >= size) {
+            if(!worst || temp->size > worst->size)
+                worst = temp;
+        }
+        temp = temp->next;
+    }
+
+    if(worst) {
+        split_block(worst, size, pid);
+        return 1;
+    }
+    return 0;
+}int next_fit(int size, int pid) {
+    static block* last = NULL;
+    if(!last) last = head;
+
+    block* temp = last;
+
+    do {
+        if(temp->free && temp->size >= size) {
+            split_block(temp, size, pid);
+            last = temp->next;
+            return 1;
+        }
+        temp = temp->next ? temp->next : head;
+    } while(temp != last);
+
+    return 0;
+}
+void free_memory(int pid) {
+    block* temp = head;
+
+    while(temp) {
+        if(temp->process_id == pid) {
+            temp->free = 1;
+            temp->process_id = -1;
+            printf("Process %d freed\n", pid);
+            return;
+        }
+        temp = temp->next;
+    }
+}
+void coalesce() {
+    block* temp = head;
+
+    while(temp && temp->next) {
+        if(temp->free && temp->next->free) {
+            temp->size += temp->next->size;
+            temp->next = temp->next->next;
+        } else {
+            temp = temp->next;
+        }
+    }
+}int main() {
+    initialize_memory();
+
+    int processes[] = {64, 128, 32, 256, 16};
+    int n = 5;
+
+    printf("\n--- FIRST FIT ---\n");
+    for(int i = 0; i < n; i++) {
+        first_fit(processes[i], i+1);
+        display_memory();
+    }
+
+    free_memory(2);
+    coalesce();
+    display_memory();
+
+    printf("\n--- BEST FIT ---\n");
+    initialize_memory();
+    for(int i = 0; i < n; i++) {
+        best_fit(processes[i], i+1);
+        display_memory();
+    }
+
+    printf("\n--- WORST FIT ---\n");
+    initialize_memory();
+    for(int i = 0; i < n; i++) {
+        worst_fit(processes[i], i+1);
+        display_memory();
+    }
+
+   return 0;
+}
