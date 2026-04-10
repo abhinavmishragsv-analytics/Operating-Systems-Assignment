@@ -1,0 +1,21 @@
+#include <fcntl.h>
+#include <unistd.h>
+
+int main() {
+    int fd;
+    char buffer[50];
+
+    fd = open("test.txt", O_CREAT | O_RDWR, 0644);
+
+    write(fd, "Hello System Calls\n", 20);
+
+    lseek(fd, 0, SEEK_SET);
+
+    read(fd, buffer, 20);
+
+    write(1, buffer, 20);
+
+    close(fd);
+
+    return 0;
+}
